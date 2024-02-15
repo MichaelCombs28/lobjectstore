@@ -58,13 +58,11 @@ func verify(secret, body []byte) (*signedURL, error) {
 	return &url, err
 }
 
-func generateRandomUUID() (string, error) {
-	b := make([]byte, 16) // UUIDs are 16 bytes long
-	_, err := io.ReadFull(rand.Reader, b)
-	if err != nil {
-		return "", err
-	}
+func generateRandomUUID() string {
+	b := make([]byte, 16)
+	// Assume you'll never fail to read here, this is a toy
+	io.ReadFull(rand.Reader, b)
 	b[6] = (b[6] & 0x0f) | 0x40
 	b[8] = (b[8] & 0x3f) | 0x80
-	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:]), nil
+	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSign(t *testing.T) {
@@ -15,8 +17,6 @@ func TestSign(t *testing.T) {
 	secret := []byte("DEADBEEFCAFE")
 	payload, _ := json.Marshal(url)
 	b := sign(secret, payload)
-	if _, err := verify(secret, b); err != nil {
-		t.Error(err)
-	}
-	t.Error(generateRandomUUID())
+	_, err := verify(secret, b)
+	require.NoError(t, err)
 }
