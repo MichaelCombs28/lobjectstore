@@ -14,9 +14,8 @@ import (
 )
 
 type signedURL struct {
-	Path    string
-	Expiry  time.Time
-	IsWrite bool
+	Path   string
+	Expiry time.Time
 }
 
 func toURL(secret []byte, s *signedURL) []byte {

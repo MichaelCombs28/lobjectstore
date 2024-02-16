@@ -6,11 +6,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
+	"net/http"
 	"os"
 	"os/signal"
+	"path"
+	"path/filepath"
 	"sync"
 	"time"
 )
+
+const dbFileName string = "_db"
 
 // Errors
 var (
@@ -31,7 +37,7 @@ func InitializeDB(filepath string) error {
 	rwlock.Lock()
 	defer rwlock.Unlock()
 	storedFiles = make(map[string]storedFile)
-	f, err := os.Open(filepath)
+	f, err := os.OpenFile(filepath, os.O_RDONLY, 0600)
 
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
@@ -83,6 +89,7 @@ func InitializeDB(filepath string) error {
 		defer rwlock.Unlock()
 		aoFile.Close()
 		aoFile = nil
+		os.Exit(0)
 	}()
 	signal.Notify(c, os.Interrupt, os.Kill)
 	return nil
@@ -129,12 +136,16 @@ func ListFiles() ([]storedFile, error) {
 	return results, nil
 }
 
-func ReadFile(id string, writer io.Writer) error {
+func ReadFile(id string, writer io.Writer, header ...http.Header) error {
 	rwlock.RLock()
 	defer rwlock.RUnlock()
 	metadata, err := getFileMetadata(id)
 	if err != nil {
 		return err
+	}
+
+	if len(header) > 0 {
+		header[0].Set("Content-Type", mime.TypeByExtension(metadata.Path))
 	}
 
 	f, err := os.Open(metadata.Path)
@@ -192,7 +203,7 @@ func UpdateFile(id string, reader io.Reader, overwrite bool) error {
 	return updateFile(id, reader, overwrite)
 }
 
-func CopyFile(id, path string) (*storedFile, error) {
+func CopyFile(id string) (*storedFile, error) {
 	rwlock.Lock()
 	defer rwlock.Unlock()
 	s, err := getFileMetadata(id)
@@ -204,7 +215,9 @@ func CopyFile(id, path string) (*storedFile, error) {
 		return nil, err
 	}
 	defer f.Close()
-	return createFile(path, f)
+
+	p := path.Join(filepath.Dir(s.Path), fmt.Sprintf("copy_%s_%s", generateRandomUUID(), filepath.Base(s.Path)))
+	return createFile(p, f)
 }
 
 func updateFile(id string, reader io.Reader, overwrite bool) error {
@@ -234,15 +247,19 @@ func updateFile(id string, reader io.Reader, overwrite bool) error {
 	return err
 }
 
-func UpsertFile(filepath string, reader io.Reader) (*storedFile, error) {
+func UpsertFile(filepath string, reader io.Reader) (result *storedFile, created bool, err error) {
 	rwlock.Lock()
 	defer rwlock.Unlock()
 	for _, sf := range storedFiles {
 		if sf.Path == filepath {
-			return &sf, updateFile(sf.ID, reader, true)
+			result = &sf
+			err = updateFile(sf.ID, reader, true)
+			return
 		}
 	}
-	return createFile(filepath, reader)
+	created = true
+	result, err = createFile(filepath, reader)
+	return
 }
 
 func DeleteFile(id string) error {

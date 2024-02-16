@@ -83,7 +83,7 @@ func TestOperations(t *testing.T) {
 		storedFile, err := CreateFile(fname(t, storageDir), strings.NewReader(`1`))
 		require.NoError(t, err)
 
-		copiedFile, err := CopyFile(storedFile.ID, fname(t, storageDir, "2"))
+		copiedFile, err := CopyFile(storedFile.ID)
 		require.NoError(t, err)
 
 		buf := bytes.NewBuffer(nil)
@@ -92,18 +92,20 @@ func TestOperations(t *testing.T) {
 	})
 
 	t.Run("upsert file new", func(t *testing.T) {
-		storedFile, err := UpsertFile(fname(t, storageDir), strings.NewReader(`{"foo": "bar"}`))
+		storedFile, created, err := UpsertFile(fname(t, storageDir), strings.NewReader(`{"foo": "bar"}`))
 		require.NoError(t, err)
 		assert.NotNil(t, storedFile)
+		assert.True(t, created)
 	})
 
 	t.Run("upsert file existing", func(t *testing.T) {
 		storedFile, err := CreateFile(fname(t, storageDir), strings.NewReader(`{"foo": "bar"}`))
 		require.NoError(t, err)
 
-		upsertedFile, err := UpsertFile(storedFile.Path, strings.NewReader("1"))
+		upsertedFile, created, err := UpsertFile(storedFile.Path, strings.NewReader("1"))
 		require.NoError(t, err)
 		assert.Equal(t, storedFile, upsertedFile)
+		assert.False(t, created)
 
 		buf := bytes.NewBuffer(nil)
 		require.NoError(t, ReadFile(storedFile.ID, buf))

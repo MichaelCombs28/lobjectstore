@@ -9,10 +9,18 @@ This is a toy.
 
 ```bash
 Usage of lobjectstore:
-  -config string
-      Server configuration file (default "./config.json")
-  -generate-secret
-      Ignores all secret paths and generates the secret using urandom
+  -host string
+    	Host address where to run server (default ":8080")
+  -path string
+    	Path where files are written (default "/var/data")
   -secret string
-      Path where secrets are located, this will override the secretpath in the config
+    	Secret used to sign URLs
 ```
+
+All Values can also be passed via env variables
+
+| Var       | Description                      |
+| --------- | -------------------------------- |
+| HOST_ADDR | Host address where to run server |
+| FILE_PATH | Path where files are written     |
+| SECRET    | Secret used to sign URLs         |
