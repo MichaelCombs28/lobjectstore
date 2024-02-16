@@ -12,7 +12,10 @@ build: setup-buildx build-cached
 build-cached:
 	docker buildx build --platform $(PLATFORMS) -t michaelcombs831/$(APP_NAME):$(VERSION) --push .
 
+build-local:
+	docker buildx build --platform $(PLATFORMS) -t michaelcombs831/$(APP_NAME):$(VERSION) .
+
 clean-buildx:
 	docker buildx rm lobjectstore-builder
 
-.PHONY: all setup-buildx build clean-buildx
+.PHONY: all setup-buildx build clean-buildx build-cached build-local
