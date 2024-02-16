@@ -42,7 +42,7 @@ func (a *api) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *api) publishCreated(id string) {
-	a.events.Publish(id, &sse.Event{
+	a.events.Publish("updates", &sse.Event{
 		Data: []byte(fmt.Sprintf(`{"event": "FileCreated", "id": "%s"}`, id)),
 	})
 }
